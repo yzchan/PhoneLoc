@@ -6,17 +6,20 @@ PhoneLoc-手机归属地查询
 
 - 版本信息 100byte
 - 号段映射区 100byte
-- 数据记录区 46*10000*2byte
+- 数据记录区 46*10000*3byte
 - 地址映射区 ≈3000byte
 
 ### 数据文件思路
 
 ```shell
-# 1342021归属地查询
-hexdump -Cv -n1 -s134 phone.dat # 读取号段索引
-# 计算记录区偏移量 200+(5-1)*10000*2+2021*2 = 84242 
-hexdump -Cv -n2 -s84242 phone.dat # 读取记录区数据 即可得到归属地的adcode
+# 以1891508为例
+hexdump -Cv -n1 -s189 phone.dat # 读取号段索引
+# 计算记录区偏移量 200+(49-1)*3*10000+1508*3 = 1444724
+hexdump -Cv -n3 -s1444724 phone.dat # 读取记录区数据 即可得到归属地的adcode
+# 00160b74  90 e3 84    得到的数据为0x84e390  最高2位表示运营商（0b00其他 0b01移动 0b10电信 0b11联通）
+# 8最高两位0b10也就是电信 最高两位置0后得到归属城市的adcode 0x04e390（10进制320400，也就是常州）
 ```
 
 ### Thinks
- - [xluohome/phonedata](https://github.com/xluohome/phonedata)
+
+- [xluohome/phonedata](https://github.com/xluohome/phonedata)
