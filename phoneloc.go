@@ -64,16 +64,35 @@ func (p *Parser) Find(sec int) (loc *PhoneLoc, err error) {
 	hlr := sec % 10000
 	blockId := int(p.buffer[mac])
 	offset := 200 + (blockId-1)*3*10000 + hlr*3
-	record := p.buffer[offset : offset+3]
-	ispBits := record[2] >> 6
+	buff := make([]byte, 4)
+	copy(buff, p.buffer[offset:offset+3])
+	ispBits := buff[2] >> 6
 	loc.Isp, _ = ispMap[ispBits]
-	record[2] = record[2] & 0b00111111
-	buf := make([]byte, 4)
-	copy(buf, record)
-	loc.CityCode = int(binary.LittleEndian.Uint32(buf))
+	buff[2] = buff[2] & 0b00111111
+	loc.CityCode = int(binary.LittleEndian.Uint32(buff))
+	loc.ProvCode = (loc.CityCode / 10000) * 10000
+	loc.Prov, _ = ProvAndCities[loc.ProvCode]
+	loc.City, _ = ProvAndCities[loc.CityCode]
 	return
 }
 
-func (p *Parser) Version() (string, error) {
-	return "", nil
+func (p *Parser) Macs() (ret []int) {
+	ret = make([]int, 0)
+	for i := 100; i < 200; i++ {
+		if p.buffer[i] != 0x00 {
+			ret = append(ret, i)
+		}
+	}
+	return
+}
+
+func (p *Parser) Version() string {
+	end := 0
+	for {
+		end++
+		if p.buffer[end] == 0x00 {
+			break
+		}
+	}
+	return string(p.buffer[0:end])
 }

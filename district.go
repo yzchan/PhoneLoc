@@ -1,4 +1,4 @@
-package lv2
+package phoneloc
 
 import (
 	"errors"
