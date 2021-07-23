@@ -7,21 +7,15 @@ import (
 	"os"
 )
 
-const (
-	Others       byte = 0b00
-	ChinaMobile  byte = 0b01 // CMCC
-	ChinaTelecom byte = 0b10 // CTCC
-	ChinaUnicom  byte = 0b11 // CUCC
-)
-
-var ispMap = map[byte]string{
-	0b00: "其他",
-	0b01: "中国移动",
-	0b10: "中国电信",
-	0b11: "中国联通",
+var ispMapping = map[byte]string{
+	0b00: "其他", // OtherIsp
+	0b01: "移动", // ChinaMobile
+	0b10: "电信", // ChinaTelecom
+	0b11: "联通", // ChinaUnicom
 }
 
 type PhoneLoc struct {
+	PhoneSec int
 	Prov     string
 	ProvCode int
 	City     string
@@ -53,26 +47,29 @@ func NewParser(file string) (p *Parser, err error) {
 }
 
 func (p *Parser) Find(sec int) (loc *PhoneLoc, err error) {
-	loc = &PhoneLoc{}
 	if sec < 1000000 || sec > 2000000 {
 		return nil, errors.New("invalid phone section")
 	}
+	loc = &PhoneLoc{PhoneSec: sec}
 	mac := sec / 10000
 	if mac > 170 && mac < 180 { // 虚拟号段
 		loc.Virtual = true
 	}
 	hlr := sec % 10000
 	blockId := int(p.buffer[mac])
+	if blockId == 0 {
+		return nil, errors.New("invalid phone section")
+	}
 	offset := 200 + (blockId-1)*3*10000 + hlr*3
 	buff := make([]byte, 4)
 	copy(buff, p.buffer[offset:offset+3])
 	ispBits := buff[2] >> 6
-	loc.Isp, _ = ispMap[ispBits]
+	loc.Isp, _ = ispMapping[ispBits]
 	buff[2] = buff[2] & 0b00111111
 	loc.CityCode = int(binary.LittleEndian.Uint32(buff))
 	loc.ProvCode = (loc.CityCode / 10000) * 10000
-	loc.Prov, _ = ProvAndCities[loc.ProvCode]
-	loc.City, _ = ProvAndCities[loc.CityCode]
+	loc.Prov, _ = DistrictMapping[loc.ProvCode]
+	loc.City, _ = DistrictMapping[loc.CityCode]
 	return
 }
 

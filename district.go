@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-var ProvAndCities = map[int]string{
+var DistrictMapping = map[int]string{
 	110000: "北京市",
 	120000: "天津市",
 	130000: "河北省",
@@ -415,7 +415,7 @@ func (d *District) IsCity() bool {
 
 func Search(keyword string) (*District, error) {
 	result := make([]int, 0)
-	for code, name := range ProvAndCities {
+	for code, name := range DistrictMapping {
 		if name == keyword {
 			result = []int{code}
 			break
@@ -427,7 +427,7 @@ func Search(keyword string) (*District, error) {
 		return &District{
 			Level:  getLevel(result[0]),
 			AdCode: result[0],
-			Name:   ProvAndCities[result[0]],
+			Name:   DistrictMapping[result[0]],
 		}, nil
 	} else if len(result) == 0 {
 		return nil, errors.New("not found")
