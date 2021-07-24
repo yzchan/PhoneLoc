@@ -15,13 +15,14 @@ var ispMapping = map[byte]string{
 }
 
 type PhoneLoc struct {
-	PhoneSec int
-	Prov     string
-	ProvCode int
-	City     string
-	CityCode int
-	Isp      string // 运营商
-	Virtual  bool   // 是否虚拟号段
+	Section  int    `json:"section"`  // 号段
+	Prov     string `json:"prov"`     // 归属省
+	City     string `json:"city"`     // 归属城市
+	Adcode   int    `json:"adcode"`   // 归属城市的行政区划代码
+	Postcode int    `json:"postcode"` // 邮编
+	Telcode  int    `json:"telcode"`  // 电话区号
+	Sp       string `json:"sp"`       // 运营商
+	Virtual  bool   `json:"virtual"`  // 是否虚拟号段
 }
 
 type Parser struct {
@@ -50,7 +51,7 @@ func (p *Parser) Find(sec int) (loc *PhoneLoc, err error) {
 	if sec < 1000000 || sec > 2000000 {
 		return nil, errors.New("invalid phone section")
 	}
-	loc = &PhoneLoc{PhoneSec: sec}
+	loc = &PhoneLoc{Section: sec}
 	mac := sec / 10000
 	if mac > 170 && mac < 180 { // 虚拟号段
 		loc.Virtual = true
@@ -64,12 +65,12 @@ func (p *Parser) Find(sec int) (loc *PhoneLoc, err error) {
 	buff := make([]byte, 4)
 	copy(buff, p.buffer[offset:offset+3])
 	ispBits := buff[2] >> 6
-	loc.Isp, _ = ispMapping[ispBits]
+	loc.Sp, _ = ispMapping[ispBits]
 	buff[2] = buff[2] & 0b00111111
-	loc.CityCode = int(binary.LittleEndian.Uint32(buff))
-	loc.ProvCode = (loc.CityCode / 10000) * 10000
-	loc.Prov, _ = DistrictMapping[loc.ProvCode]
-	loc.City, _ = DistrictMapping[loc.CityCode]
+	loc.Adcode = int(binary.LittleEndian.Uint32(buff))
+	provCode := (loc.Adcode / 10000) * 10000
+	loc.Prov, _ = DistrictMapping[provCode]
+	loc.City, _ = DistrictMapping[loc.Adcode]
 	return
 }
 
