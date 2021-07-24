@@ -3,6 +3,7 @@ package phoneloc
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 )
@@ -19,8 +20,8 @@ type PhoneLoc struct {
 	Prov     string `json:"prov"`     // 归属省
 	City     string `json:"city"`     // 归属城市
 	Adcode   int    `json:"adcode"`   // 归属城市的行政区划代码
-	Postcode int    `json:"postcode"` // 邮编
-	Telcode  int    `json:"telcode"`  // 电话区号
+	Postcode string `json:"postcode"` // 邮编
+	TelCode  string `json:"telcode"`  // 电话区号
 	Sp       string `json:"sp"`       // 运营商
 	Virtual  bool   `json:"virtual"`  // 是否虚拟号段
 }
@@ -68,9 +69,15 @@ func (p *Parser) Find(sec int) (loc *PhoneLoc, err error) {
 	loc.Sp, _ = ispMapping[ispBits]
 	buff[2] = buff[2] & 0b00111111
 	loc.Adcode = int(binary.LittleEndian.Uint32(buff))
-	provCode := (loc.Adcode / 10000) * 10000
-	loc.Prov, _ = DistrictMapping[provCode]
-	loc.City, _ = DistrictMapping[loc.Adcode]
+	city, ok := DistrictMapping[loc.Adcode]
+	if !ok {
+		return nil, errors.New(fmt.Sprintf("invalid adcode:%v", loc.Adcode))
+	}
+	loc.Postcode = city.Postcode
+	loc.TelCode = city.TelCode
+	loc.City = city.Name
+	prov := city.GetProvince()
+	loc.Prov = prov.Name
 	return
 }
 
