@@ -54,7 +54,7 @@ func (p *Parser) Find(sec int) (loc *PhoneLoc, err error) {
 	}
 	loc = &PhoneLoc{Section: sec}
 	mac := sec / 10000
-	if mac > 170 && mac < 180 { // 虚拟号段
+	if mac > 160 && mac < 180 { // 虚拟号段
 		loc.Virtual = true
 	}
 	hlr := sec % 10000
