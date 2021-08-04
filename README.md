@@ -7,9 +7,10 @@ PhoneLoc-手机归属地查询
 - 版本信息 100byte
 - 号段映射区 100byte
 - 数据块记录区 46*10000*3byte
-- *地址映射区 ≈3000byte (TODO)
 
 ### 数据文件思路
+
+充分利用手机号段的特性，将数据按照索引位置存储。查询时直接按照偏移量定位即可。看一下计算方法就能明白：
 
 ```shell
 # 以1891508为例
@@ -32,7 +33,7 @@ goarch: amd64
 pkg: github.com/yzchan/phoneloc
 cpu: Intel(R) Core(TM) i5-7360U CPU @ 2.30GHz
 BenchmarkFind
-BenchmarkFind-4         12357705                92.87 ns/op           80 B/op          1 allocs/op
+BenchmarkFind-4         10484691               116.0 ns/op           112 B/op          1 allocs/op
 PASS
 ok      github.com/yzchan/phoneloc      1.266s
 ```
@@ -45,3 +46,4 @@ ok      github.com/yzchan/phoneloc      1.266s
 ### Thinks
 
 - [xluohome/phonedata](https://github.com/xluohome/phonedata)
+- [ip138](https://ip138.com/sj/)
